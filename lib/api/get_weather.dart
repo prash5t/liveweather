@@ -1,23 +1,27 @@
 import 'dart:convert';
+import 'dart:io';
+
 //import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:liveweather/api/Weather.dart';
 import '../trash.dart';
 
-Future getWeather() async {
+Future<Weather?> getWeather({String place = "auto:ip"}) async {
   final String key = trash();
-  final String query = "auto:ip";
-  final String usedAPI =
-      "http://api.weatherapi.com/v1/current.json?key=$key&q=$query";
-
+  //final String query = "auto:ip";
+  final String usedAPI = kIsWeb
+      ? "//api.weatherapi.com/v1/current.json?key=$key&q=$place"
+      : "http://api.weatherapi.com/v1/current.json?key=$key&q=$place";
   try {
-    final response = await http.get(Uri.parse(usedAPI));
+    final response = await http.get(Uri.parse(usedAPI), headers: {
+      "Accept": "application/json",
+      "Access-Control_Allow_Origin": "*"
+    });
     if (response.statusCode == 200) {
-      var decodedResponse = json.decode(response.body);
+      var decodedResponse = Weather.fromJson(json.decode(response.body));
       return decodedResponse;
-    } else {
-      return "Bad Request";
     }
-  } catch (e) {
     return null;
-  }
+  } catch (e) {}
 }
