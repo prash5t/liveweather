@@ -39,16 +39,17 @@ class _HomePageState extends State<HomePage> {
                       weatherData["current"]["condition"]["icon"].toString();
                   print(statusIcon);
                   print("success");
+                  var imageByTemp = defineBackground(currentCelcius);
                   return Container(
                     //color: Colors.white,
                     height: size.height,
                     width: size.width,
-                    // decoration: BoxDecoration(
-                    //     image: DecorationImage(
-                    //         image: AssetImage(
-                    //           "assets/bg.png",
-                    //         ),
-                    //         fit: BoxFit.cover)),
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: AssetImage(
+                              "$imageByTemp",
+                            ),
+                            fit: BoxFit.cover)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: SafeArea(
@@ -135,5 +136,16 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     ));
+  }
+
+  defineBackground(data) {
+    var temperature = double.parse(data);
+    if (temperature < 15) {
+      return "assets/cold_weather.png";
+    } else if (temperature > 25) {
+      return "assets/hot_weather.jpeg";
+    } else {
+      return "assets/mid_weather.jpeg";
+    }
   }
 }
