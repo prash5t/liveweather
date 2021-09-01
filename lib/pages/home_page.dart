@@ -182,7 +182,7 @@ class _HomePageState extends State<HomePage> {
 
   defineBackground(data) {
     var temperature = data;
-    if (temperature < 15) {
+    if (temperature < 18) {
       return "assets/cold_weather.png";
     } else if (temperature > 25) {
       return "assets/hot_weather.jpeg";
