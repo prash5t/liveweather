@@ -158,6 +158,15 @@ class _HomePageState extends State<HomePage> {
                               style:
                                   TextStyle(color: Colors.white, fontSize: 25),
                             ),
+                            IconButton(
+                                onPressed: () {
+                                  getweather = getWeather();
+                                  setState(() {});
+                                },
+                                icon: Icon(
+                                  Icons.close,
+                                  size: 50,
+                                )),
                             SizedBox(
                               height: size.height * 0.1,
                             ),
