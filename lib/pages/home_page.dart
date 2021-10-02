@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
                   //key:  searchkey,
                   child: TextFormField(
                     onChanged: (value) {
-                      city = value;
+                      city = "$value";
                     },
                     decoration: InputDecoration(
                         hintText: "Enter a city name",
