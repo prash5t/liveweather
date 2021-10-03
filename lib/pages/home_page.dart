@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:liveweather/api/Weather.dart';
 //import 'package:http/http.dart' as http;
 import 'package:liveweather/api/get_weather.dart';
+import 'package:liveweather/models/place_suggestion.dart';
+import 'package:liveweather/search/place_search.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -30,38 +32,23 @@ class _HomePageState extends State<HomePage> {
     var size = MediaQuery.of(context).size;
     return Scaffold(
         appBar: AppBar(
-          title: searchClicked
-              ? Form(
-                  //key:  searchkey,
-                  child: TextFormField(
-                    onChanged: (value) {
-                      city = "$value";
-                    },
-                    decoration: InputDecoration(
-                        hintText: "Enter a city name",
-                        suffixIcon: IconButton(
-                            onPressed: () {
-                              searchClicked = false;
-
-                              print(city);
-                              setState(() {});
-                            },
-                            icon: Icon(Icons.close))),
-                  ),
-                )
-              : Text("Live Weather"),
+          title: Text("Live Weather"),
           actions: [
             IconButton(
-                onPressed: () {
-                  if (city != null) {
-                    getweather = getWeather(place: "$city");
-                    setState(() {});
-                  }
-                  searchClicked = true;
+              onPressed: () async {
+                PlaceSuggestion res = await showSearch(
+                  context: context,
+                  delegate: PlaceSearch(),
+                );
+                if (res.name == null) return;
+                getweather = getWeather(place: "${res.name}");
 
-                  setState(() {});
-                },
-                icon: Icon(CupertinoIcons.search))
+                searchClicked = true;
+
+                setState(() {});
+              },
+              icon: Icon(CupertinoIcons.search),
+            )
           ],
         ),
         //backgroundColor: Colors.transparent,
@@ -69,121 +56,118 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             children: [
               FutureBuilder<Weather?>(
-                  future: getweather,
-                  builder: (context, snapshot) {
-                    print(snapshot.data);
-                    if (snapshot.hasData) {
-                      //var weatherData = snapshot.data;
+                future: getweather,
+                builder: (context, snapshot) {
+                  print(snapshot.data);
+                  if (snapshot.hasData) {
+                    //var weatherData = snapshot.data;
 
-                      var imageByTemp =
-                          defineBackground(snapshot.data?.current?.tempC);
-                      return Container(
-                        //color: Colors.white,
-                        height: size.height,
-                        width: size.width,
-                        decoration: BoxDecoration(
-                            image: DecorationImage(
-                                image: AssetImage(
-                                  "$imageByTemp",
+                    var imageByTemp =
+                        defineBackground(snapshot.data?.current?.tempC);
+                    return Container(
+                      //color: Colors.white,
+                      height: size.height,
+                      width: size.width,
+                      decoration: BoxDecoration(
+                          image: DecorationImage(
+                              image: AssetImage(
+                                "$imageByTemp",
+                              ),
+                              fit: BoxFit.cover)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SafeArea(
+                          child: Column(
+                            children: <Widget>[
+                              Text(
+                                "TODAY",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 30),
+                              ),
+                              SizedBox(
+                                height: size.height * 0.01,
+                              ),
+                              Text(
+                                "${snapshot.data?.location?.name}, ${snapshot.data?.location?.country}",
+                                style: TextStyle(
+                                    fontStyle: FontStyle.italic, fontSize: 18),
+                              ),
+                              SizedBox(
+                                height: size.height * 0.08,
+                              ),
+                              Container(
+                                //color: Colors.blue,
+                                height: size.height * 0.3,
+                                width: size.height * 0.3,
+                                decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                        image: NetworkImage(kIsWeb
+                                            ? "${snapshot.data?.current?.condition?.icon}"
+                                            : "http:${snapshot.data?.current?.condition?.icon}"),
+                                        fit: BoxFit.cover)),
+                              ),
+                              Text(
+                                "${snapshot.data?.current?.tempC}° C",
+                                style: TextStyle(
+                                    fontSize: 80, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(
+                                height: size.height * 0.03,
+                              ),
+                              Text(
+                                "${snapshot.data?.current?.condition?.text}",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                fit: BoxFit.cover)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: SafeArea(
-                            child: Column(
-                              children: <Widget>[
-                                Text(
-                                  "TODAY",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 30),
-                                ),
-                                SizedBox(
-                                  height: size.height * 0.01,
-                                ),
-                                Text(
-                                  "${snapshot.data?.location?.name}, ${snapshot.data?.location?.country}",
-                                  style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                      fontSize: 18),
-                                ),
-                                SizedBox(
-                                  height: size.height * 0.08,
-                                ),
-                                Container(
-                                  //color: Colors.blue,
-                                  height: size.height * 0.3,
-                                  width: size.height * 0.3,
-                                  decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                          image: NetworkImage(kIsWeb
-                                              ? "${snapshot.data?.current?.condition?.icon}"
-                                              : "http:${snapshot.data?.current?.condition?.icon}"),
-                                          fit: BoxFit.cover)),
-                                ),
-                                Text(
-                                  "${snapshot.data?.current?.tempC}° C",
-                                  style: TextStyle(
-                                      fontSize: 80,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                SizedBox(
-                                  height: size.height * 0.03,
-                                ),
-                                Text(
-                                  "${snapshot.data?.current?.condition?.text}",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    }
-                    if (!snapshot.hasData) {
-                      print("failure");
-                      return Center(
-                          child: Container(
-                        width: size.width,
-                        height: size.height,
-                        color: Colors.black,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Text(
-                              "Incorrect City?",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 25),
-                            ),
-                            IconButton(
-                                onPressed: () {
-                                  getweather = getWeather();
-                                  setState(() {});
-                                },
-                                icon: Icon(
-                                  Icons.close,
-                                  size: 50,
-                                )),
-                            SizedBox(
-                              height: size.height * 0.1,
-                            ),
-                            Column(
-                              children: [
-                                CircularProgressIndicator(),
-                                SizedBox(height: size.height * 0.01),
-                                Text("Loading... Please Wait"),
-                              ],
-                            )
-                          ],
-                        ),
-                      ));
-                    }
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    print("failure");
+                    return Center(
+                        child: Container(
+                      width: size.width,
+                      height: size.height,
+                      color: Colors.black,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            "Incorrect City?",
+                            style: TextStyle(color: Colors.white, fontSize: 25),
+                          ),
+                          IconButton(
+                              onPressed: () {
+                                getweather = getWeather();
+                                setState(() {});
+                              },
+                              icon: Icon(
+                                Icons.close,
+                                size: 50,
+                              )),
+                          SizedBox(
+                            height: size.height * 0.1,
+                          ),
+                          Column(
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: size.height * 0.01),
+                              Text("Loading... Please Wait"),
+                            ],
+                          )
+                        ],
+                      ),
+                    ));
+                  }
 
-                    return CircularProgressIndicator();
-                  }),
+                  return CircularProgressIndicator();
+                },
+              ),
             ],
           ),
         ));
