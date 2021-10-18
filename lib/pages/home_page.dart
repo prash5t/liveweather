@@ -1,11 +1,15 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:liveweather/api/Weather.dart';
-//import 'package:http/http.dart' as http;
 import 'package:liveweather/api/get_weather.dart';
+import 'package:liveweather/constants/assets.dart';
+import 'package:liveweather/constants/styles.dart';
 import 'package:liveweather/models/place_suggestion.dart';
+import 'package:liveweather/models/weather.dart';
 import 'package:liveweather/search/place_search.dart';
+import 'package:liveweather/extensions/date_ext.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -24,153 +28,50 @@ class _HomePageState extends State<HomePage> {
     getweather = getWeather();
     super.initState();
   }
-  //var searchkey = formke
-  //Future? currentWeather;
 
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Live Weather"),
-          actions: [
-            IconButton(
-              onPressed: () async {
-                PlaceSuggestion res = await showSearch(
-                  context: context,
-                  delegate: PlaceSearch(),
-                );
-                if (res.name == null) return;
-                getweather = getWeather(place: "${res.name}");
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          PlaceSuggestion res = await showSearch(
+            context: context,
+            delegate: PlaceSearch(),
+          );
+          if (res.name == null) return;
+          getweather = getWeather(place: "${res.name}");
 
-                searchClicked = true;
+          searchClicked = true;
 
-                setState(() {});
-              },
-              icon: Icon(CupertinoIcons.search),
-            )
-          ],
-        ),
-        //backgroundColor: Colors.transparent,
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder<Weather?>(
-                future: getweather,
-                builder: (context, snapshot) {
-                  print(snapshot.data);
-                  if (snapshot.hasData) {
-                    //var weatherData = snapshot.data;
-
-                    var imageByTemp =
-                        defineBackground(snapshot.data?.current?.tempC);
-                    return Container(
-                      //color: Colors.white,
-                      height: size.height,
-                      width: size.width,
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                              image: AssetImage(
-                                "$imageByTemp",
-                              ),
-                              fit: BoxFit.cover)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SafeArea(
-                          child: Column(
-                            children: <Widget>[
-                              Text(
-                                "TODAY",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 30),
-                              ),
-                              SizedBox(
-                                height: size.height * 0.01,
-                              ),
-                              Text(
-                                "${snapshot.data?.location?.name}, ${snapshot.data?.location?.country}",
-                                style: TextStyle(
-                                    fontStyle: FontStyle.italic, fontSize: 18),
-                              ),
-                              SizedBox(
-                                height: size.height * 0.08,
-                              ),
-                              Container(
-                                //color: Colors.blue,
-                                height: size.height * 0.3,
-                                width: size.height * 0.3,
-                                decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                        image: NetworkImage(kIsWeb
-                                            ? "${snapshot.data?.current?.condition?.icon}"
-                                            : "http:${snapshot.data?.current?.condition?.icon}"),
-                                        fit: BoxFit.cover)),
-                              ),
-                              Text(
-                                "${snapshot.data?.current?.tempC}° C",
-                                style: TextStyle(
-                                    fontSize: 80, fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(
-                                height: size.height * 0.03,
-                              ),
-                              Text(
-                                "${snapshot.data?.current?.condition?.text}",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  if (!snapshot.hasData) {
-                    print("failure");
-                    return Center(
-                        child: Container(
-                      width: size.width,
-                      height: size.height,
-                      color: Colors.black,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Text(
-                            "Incorrect City?",
-                            style: TextStyle(color: Colors.white, fontSize: 25),
-                          ),
-                          IconButton(
-                              onPressed: () {
-                                getweather = getWeather();
-                                setState(() {});
-                              },
-                              icon: Icon(
-                                Icons.close,
-                                size: 50,
-                              )),
-                          SizedBox(
-                            height: size.height * 0.1,
-                          ),
-                          Column(
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: size.height * 0.01),
-                              Text("Loading... Please Wait"),
-                            ],
-                          )
-                        ],
-                      ),
-                    ));
-                  }
-
-                  return CircularProgressIndicator();
-                },
-              ),
-            ],
+          setState(() {});
+        },
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: Colors.white,
+        child: Center(
+          child: Icon(
+            Icons.search,
+            size: 28,
+            color: Colors.black,
           ),
-        ));
+        ),
+      ),
+      body: SafeArea(
+        child: FutureBuilder<Weather?>(
+          future: getweather,
+          builder: (context, snapshot) {
+            // return _buildFailed();
+            if (snapshot.hasData) {
+              var weather = snapshot.data;
+              if (weather == null) return _buildFailed();
+              return _buildSuccess(weather);
+            }
+            if (snapshot.hasError) return _buildFailed();
+            return Center(child: CircularProgressIndicator());
+          },
+        ),
+      ),
+    );
   }
 
   defineBackground(data) {
@@ -182,5 +83,145 @@ class _HomePageState extends State<HomePage> {
     } else {
       return "assets/mid_weather.jpeg";
     }
+  }
+
+  Widget _buildFailed() {
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            "Incorrect City?",
+            style: TextStyle(color: Colors.white, fontSize: 25),
+          ),
+          const SizedBox(height: 10),
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.blue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            onPressed: () {
+              getweather = getWeather();
+              setState(() {});
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: 5),
+                Icon(Icons.close, color: Colors.white),
+                Text("Close", style: TextStyle(color: Colors.white)),
+                const SizedBox(width: 5),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuccess(Weather weather) {
+    var now = DateTime.now();
+    return Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(Assets.mid_weather),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
+        child: Column(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(),
+                  Text(
+                    weather.city,
+                    style: shadowedStyle.copyWith(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 40,
+                    ),
+                  ),
+                  Text(
+                    now.stringify(),
+                    style: shadowedStyle.copyWith(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    "${weather.celcius} °C",
+                    style: shadowedStyle.copyWith(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 80,
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      11,
+                      (i) => Container(
+                        height: 3,
+                        width: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black,
+                              blurRadius: 0.1,
+                              spreadRadius: 0.1,
+                            )
+                          ],
+                        ),
+                        margin:
+                            (i == 10) ? null : const EdgeInsets.only(right: 5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: Colors.blue,
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.network(
+                          kIsWeb ? weather.image : "https:${weather.image}",
+                          height: 30,
+                          width: 30,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          weather.condition,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10)
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
